@@ -18,6 +18,16 @@ export function ImageUploader({ onUpload }: { onUpload: (file: File) => void }) 
         }
     }, []);
 
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && file.type.startsWith('image/')) {
+            setPreview(URL.createObjectURL(file));
+            onUpload(file);
+        }
+    };
+
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -64,7 +74,17 @@ export function ImageUploader({ onUpload }: { onUpload: (file: File) => void }) 
                         <p className="text-sm font-medium">Drag & Drop image</p>
                         <p className="text-xs text-white/40 mt-1">PNG, JPG, TIFF up to 10MB</p>
                     </div>
-                    <button className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors">
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                    />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
+                    >
                         Select File
                     </button>
                 </>
