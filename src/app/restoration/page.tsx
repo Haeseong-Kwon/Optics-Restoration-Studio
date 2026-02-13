@@ -5,16 +5,22 @@ import { ImageUploader } from '@/components/ImageUploader';
 import { ImageComparisonViewer } from '@/components/ImageComparisonViewer';
 import { ModelSelector } from '@/components/optics/ModelSelector';
 import { ProcessingStatus } from '@/components/optics/ProcessingStatus';
+import { BatchManager } from '@/components/optics/BatchManager';
+import { ComparisonGrid } from '@/components/optics/ComparisonGrid';
 import { supabase } from '@/lib/supabase';
-import { RestorationJob } from '@/types/optics';
-import { Rocket, Sliders, LayoutDashboard, History } from 'lucide-react';
+import { RestorationJob, BenchmarkResult } from '@/types/optics';
+import { Rocket, Sliders, LayoutDashboard, History, Beaker, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function RestorationPage() {
+    const [activeTab, setActiveTab] = useState<'workbench' | 'batch'>('workbench');
     const [isProcessing, setIsProcessing] = useState(false);
     const [currentJob, setCurrentJob] = useState<RestorationJob | null>(null);
     const [selectedModelId, setSelectedModelId] = useState('wiener_deconvolution_v1');
     const [uploadProgress, setUploadProgress] = useState(0);
+
+    // Real results for comparison grid (mocking data structure for now)
+    const [comparisonResults, setComparisonResults] = useState<{ job: RestorationJob; benchmark?: BenchmarkResult }[]>([]);
 
     const handleUpload = async (file: File) => {
         setIsProcessing(true);
@@ -74,19 +80,34 @@ export default function RestorationPage() {
                 </div>
 
                 <nav className="flex flex-col gap-1">
-                    <NavItem icon={<LayoutDashboard className="w-4 h-4" />} label="Workbench" active />
+                    <div onClick={() => setActiveTab('workbench')}>
+                        <NavItem
+                            icon={<LayoutDashboard className="w-4 h-4" />}
+                            label="Workbench"
+                            active={activeTab === 'workbench'}
+                        />
+                    </div>
+                    <div onClick={() => setActiveTab('batch')}>
+                        <NavItem
+                            icon={<Layers className="w-4 h-4" />}
+                            label="Batch Analysis"
+                            active={activeTab === 'batch'}
+                        />
+                    </div>
                     <NavItem icon={<Sliders className="w-4 h-4" />} label="Parameters" />
                     <NavItem icon={<History className="w-4 h-4" />} label="Archive" />
                 </nav>
 
                 <div className="h-px bg-white/5 my-2" />
 
-                <ModelSelector
-                    selectedModelId={selectedModelId}
-                    onSelect={setSelectedModelId}
-                />
+                {activeTab === 'workbench' && (
+                    <ModelSelector
+                        selectedModelId={selectedModelId}
+                        onSelect={setSelectedModelId}
+                    />
+                )}
 
-                {currentJob && (
+                {currentJob && activeTab === 'workbench' && (
                     <div className="mt-auto">
                         <ProcessingStatus jobId={currentJob.id} />
                     </div>
@@ -97,42 +118,64 @@ export default function RestorationPage() {
             <main className="flex-1 overflow-y-auto bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent">
                 <div className="p-8 max-w-6xl mx-auto flex flex-col gap-8">
                     <header className="flex flex-col gap-1">
-                        <h2 className="text-4xl font-extrabold tracking-tight">Active Restoration</h2>
-                        <p className="text-white/40 text-sm">Fine-tune and process high-resolution optical data.</p>
+                        <h2 className="text-4xl font-extrabold tracking-tight">
+                            {activeTab === 'workbench' ? 'Active Restoration' : 'Batch Evaluation'}
+                        </h2>
+                        <p className="text-white/40 text-sm">
+                            {activeTab === 'workbench'
+                                ? 'Fine-tune and process high-resolution optical data.'
+                                : 'Process multiple images and compare relative model accuracy.'}
+                        </p>
                     </header>
 
-                    <div className="grid grid-cols-1 gap-8">
-                        <section className="bg-white/5 border border-white/10 rounded-3xl p-8 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
-                                <Rocket className="w-32 h-32 text-primary rotate-12" />
-                            </div>
+                    <div className="grid grid-cols-1 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                        {activeTab === 'workbench' ? (
+                            <section className="bg-white/5 border border-white/10 rounded-3xl p-8 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-8 opacity-20 pointer-events-none">
+                                    <Rocket className="w-32 h-32 text-primary rotate-12" />
+                                </div>
 
-                            <div className="relative z-10 flex flex-col gap-6">
-                                <h3 className="text-xl font-bold">Image Pipeline</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-[500px]">
-                                    <div className="flex flex-col gap-4">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-xs font-bold uppercase tracking-widest text-white/40">Input Data</span>
-                                            <div className="flex gap-1">
-                                                <div className="w-1 h-1 rounded-full bg-primary" />
-                                                <div className="w-1 h-1 rounded-full bg-white/20" />
+                                <div className="relative z-10 flex flex-col gap-6">
+                                    <h3 className="text-xl font-bold">Image Pipeline</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-[500px]">
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-bold uppercase tracking-widest text-white/40">Input Data</span>
+                                                <div className="flex gap-1">
+                                                    <div className="w-1 h-1 rounded-full bg-primary" />
+                                                    <div className="w-1 h-1 rounded-full bg-white/20" />
+                                                </div>
                                             </div>
+                                            <ImageUploader onUpload={handleUpload} />
                                         </div>
-                                        <ImageUploader onUpload={handleUpload} />
-                                    </div>
 
-                                    <div className="flex flex-col gap-4">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-xs font-bold uppercase tracking-widest text-white/40">Restored Output</span>
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs font-bold uppercase tracking-widest text-white/40">Restored Output</span>
+                                            </div>
+                                            <ImageComparisonViewer
+                                                original={getImageUrl(currentJob?.blurred_image_path)}
+                                                restored={getImageUrl(currentJob?.restored_image_path)}
+                                            />
                                         </div>
-                                        <ImageComparisonViewer
-                                            original={getImageUrl(currentJob?.blurred_image_path)}
-                                            restored={getImageUrl(currentJob?.restored_image_path)}
-                                        />
                                     </div>
                                 </div>
+                            </section>
+                        ) : (
+                            <div className="flex flex-col gap-12">
+                                <BatchManager />
+
+                                <section className="space-y-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                                            <Beaker className="w-4 h-4 text-purple-400" />
+                                        </div>
+                                        <h3 className="font-bold text-lg">Model Performance Grid</h3>
+                                    </div>
+                                    <ComparisonGrid results={comparisonResults} />
+                                </section>
                             </div>
-                        </section>
+                        )}
                     </div>
                 </div>
             </main>

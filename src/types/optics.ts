@@ -28,6 +28,7 @@ export interface BenchmarkResult {
     model_name: string;
     psnr: number;
     ssim: number;
+    niqe?: number;
     created_at: string;
 }
 
