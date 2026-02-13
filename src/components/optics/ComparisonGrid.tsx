@@ -3,7 +3,9 @@
 import React from 'react';
 import { RestorationJob, BenchmarkResult } from '@/types/optics';
 import { cn } from '@/lib/utils';
-import { TrendingUp, Info } from 'lucide-react';
+import { TrendingUp, Info, FileText } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface ModelResult {
     job: RestorationJob;
@@ -15,6 +17,26 @@ interface ComparisonGridProps {
 }
 
 export function ComparisonGrid({ results }: ComparisonGridProps) {
+    const gridRef = React.useRef<HTMLDivElement>(null);
+
+    const exportPDF = async () => {
+        if (!gridRef.current) return;
+
+        const canvas = await html2canvas(gridRef.current, {
+            backgroundColor: '#000000',
+            scale: 2,
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('l', 'mm', 'a4');
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`restoration_report_${Date.now()}.pdf`);
+    };
+
     // Find the best model based on PSNR
     const bestJobId = results.length > 0
         ? [...results].sort((a, b) => (b.benchmark?.psnr || 0) - (a.benchmark?.psnr || 0))[0]?.job.id
@@ -22,67 +44,78 @@ export function ComparisonGrid({ results }: ComparisonGridProps) {
 
     const getImageUrl = (path: string | undefined) => {
         if (!path) return '';
-        // This is a placeholder since we don't have the supabase instance inside the grid
-        // The parent should ideally pass URLs or we use a helper
         return `https://jltunlvyfnbxluamwvmv.supabase.co/storage/v1/object/public/images/${path}`;
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-1">
-            {results.map(({ job, benchmark }) => (
-                <div
-                    key={job.id}
-                    className={cn(
-                        "relative group flex flex-col bg-white/5 border rounded-2xl overflow-hidden transition-all duration-500",
-                        job.id === bestJobId ? "border-primary ring-1 ring-primary/50 shadow-2xl shadow-primary/10" : "border-white/10 hover:border-white/20"
-                    )}
+        <div className="flex flex-col gap-6">
+            <div className="flex justify-end">
+                <button
+                    onClick={exportPDF}
+                    disabled={results.length === 0}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 border border-white/10 rounded-xl text-xs font-bold uppercase tracking-widest text-white/80 transition-all"
                 >
-                    {/* Best Model Badge */}
-                    {job.id === bestJobId && (
-                        <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-lg">
-                            <TrendingUp className="w-3 h-3" />
-                            Best Performance
-                        </div>
-                    )}
+                    <FileText className="w-3.5 h-3.5" />
+                    Export Report (PDF)
+                </button>
+            </div>
 
-                    {/* Image Container */}
-                    <div className="aspect-video relative bg-black flex items-center justify-center overflow-hidden">
-                        {job.restored_image_path ? (
-                            <img
-                                src={getImageUrl(job.restored_image_path)}
-                                alt={job.algorithm}
-                                className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
-                            />
-                        ) : (
-                            <div className="flex flex-col items-center gap-2 opacity-20">
-                                <div className="w-8 h-8 rounded-full border-2 border-dashed border-current animate-spin" />
-                                <span className="text-[10px] font-medium uppercase tracking-widest">Processing</span>
+            <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 gap-6 p-1 bg-black">
+                {results.map(({ job, benchmark }) => (
+                    <div
+                        key={job.id}
+                        className={cn(
+                            "relative group flex flex-col bg-white/5 border rounded-2xl overflow-hidden transition-all duration-500",
+                            job.id === bestJobId ? "border-primary ring-1 ring-primary/50 shadow-2xl shadow-primary/10" : "border-white/10 hover:border-white/20"
+                        )}
+                    >
+                        {/* Best Model Badge */}
+                        {job.id === bestJobId && (
+                            <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full shadow-lg">
+                                <TrendingUp className="w-3 h-3" />
+                                Best Performance
                             </div>
                         )}
-                    </div>
 
-                    {/* Metrics Footer */}
-                    <div className="p-4 bg-gradient-to-t from-black/80 to-transparent">
-                        <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-sm font-bold text-white truncate max-w-[150px]">{job.algorithm?.replace(/_/g, ' ')}</h4>
-                            <Info className="w-3.5 h-3.5 text-white/20" />
+                        {/* Image Container */}
+                        <div className="aspect-video relative bg-black flex items-center justify-center overflow-hidden">
+                            {job.restored_image_path ? (
+                                <img
+                                    src={getImageUrl(job.restored_image_path)}
+                                    alt={job.algorithm}
+                                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
+                                />
+                            ) : (
+                                <div className="flex flex-col items-center gap-2 opacity-20">
+                                    <div className="w-8 h-8 rounded-full border-2 border-dashed border-current animate-spin" />
+                                    <span className="text-[10px] font-medium uppercase tracking-widest">Processing</span>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2">
-                            <MetricItem label="PSNR" value={benchmark?.psnr} highlighted={job.id === bestJobId} />
-                            <MetricItem label="SSIM" value={benchmark?.ssim} />
-                            <MetricItem label="NIQE" value={benchmark?.niqe || 4.2} />
+                        {/* Metrics Footer */}
+                        <div className="p-4 bg-gradient-to-t from-black/80 to-transparent">
+                            <div className="flex justify-between items-center mb-4">
+                                <h4 className="text-sm font-bold text-white truncate max-w-[150px]">{job.algorithm?.replace(/_/g, ' ')}</h4>
+                                <Info className="w-3.5 h-3.5 text-white/20" />
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-2">
+                                <MetricItem label="PSNR" value={benchmark?.psnr} highlighted={job.id === bestJobId} />
+                                <MetricItem label="SSIM" value={benchmark?.ssim} />
+                                <MetricItem label="NIQE" value={benchmark?.niqe || 4.2} />
+                            </div>
                         </div>
                     </div>
-                </div>
-            ))}
+                ))}
 
-            {results.length === 0 && (
-                <div className="col-span-full h-[300px] border border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center text-white/20 gap-3">
-                    <TrendingUp className="w-8 h-8" />
-                    <p className="text-sm font-medium">Select models to compare performance data</p>
-                </div>
-            )}
+                {results.length === 0 && (
+                    <div className="col-span-full h-[300px] border border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center text-white/20 gap-3">
+                        <TrendingUp className="w-8 h-8" />
+                        <p className="text-sm font-medium">Select models to compare performance data</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

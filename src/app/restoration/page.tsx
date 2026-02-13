@@ -7,6 +7,7 @@ import { ModelSelector } from '@/components/optics/ModelSelector';
 import { ProcessingStatus } from '@/components/optics/ProcessingStatus';
 import { BatchManager } from '@/components/optics/BatchManager';
 import { ComparisonGrid } from '@/components/optics/ComparisonGrid';
+import { TuningPanel } from '@/components/optics/TuningSlider';
 import { supabase } from '@/lib/supabase';
 import { RestorationJob, BenchmarkResult } from '@/types/optics';
 import { Rocket, Sliders, LayoutDashboard, History, Beaker, Layers } from 'lucide-react';
@@ -18,6 +19,15 @@ export default function RestorationPage() {
     const [currentJob, setCurrentJob] = useState<RestorationJob | null>(null);
     const [selectedModelId, setSelectedModelId] = useState('wiener_deconvolution_v1');
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [parameters, setParameters] = useState({
+        denoise_level: 0.5,
+        sharpness: 0.3,
+        iterations: 20
+    });
+
+    const handleParameterChange = (key: string, value: number) => {
+        setParameters(prev => ({ ...prev, [key]: value }));
+    };
 
     // Real results for comparison grid (mocking data structure for now)
     const [comparisonResults, setComparisonResults] = useState<{ job: RestorationJob; benchmark?: BenchmarkResult }[]>([]);
@@ -44,7 +54,8 @@ export default function RestorationPage() {
                     status: 'pending',
                     algorithm: selectedModelId,
                     progress: 0,
-                    current_step: 'Queued'
+                    current_step: 'Queued',
+                    parameters: parameters
                 })
                 .select()
                 .single();
@@ -101,10 +112,17 @@ export default function RestorationPage() {
                 <div className="h-px bg-white/5 my-2" />
 
                 {activeTab === 'workbench' && (
-                    <ModelSelector
-                        selectedModelId={selectedModelId}
-                        onSelect={setSelectedModelId}
-                    />
+                    <>
+                        <ModelSelector
+                            selectedModelId={selectedModelId}
+                            onSelect={setSelectedModelId}
+                        />
+                        <div className="h-px bg-white/5 my-2" />
+                        <TuningPanel
+                            parameters={parameters}
+                            onParameterChange={handleParameterChange}
+                        />
+                    </>
                 )}
 
                 {currentJob && activeTab === 'workbench' && (
