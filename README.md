@@ -1,5 +1,12 @@
 # Research Report: AI 기반 광학 수차 보정 및 초해상도(Super-resolution) 영상 복원 시스템
 
+<div align="center">
+  <img src="optics_restoration_demo.gif" width="85%" />
+  <p align="center">
+    <em>사용자 인터페이스(UI)를 통한 실시간 광학 수차 보정 및 이미지 복원 프로세스 시연 화면입니다. Split-viewer를 통해 복원 전/후의 정밀한 디테일 대조와 정량적 품질 지표(PSNR, SSIM) 리포팅을 지원합니다.</em>
+  </p>
+</div>
+
 ## 1. Research Background: Optical Degradation Physics
 광학계에서 획득되는 모든 영상은 물리적 한계로 인해 원본 정보의 감쇠(Degradation)를 수반한다. 본 연구는 광학적 열화 과정을 수학적으로 모델링하고 이를 역산하여 복원하는 시스템을 구축하는 데 목적이 있다.
 
