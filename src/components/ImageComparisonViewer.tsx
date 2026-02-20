@@ -47,7 +47,7 @@ export function ImageComparisonViewer({ original, restored }: ImageComparisonVie
                     className="absolute inset-0 w-full h-full pointer-events-none"
                     style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}
                 >
-                    {original && <img src={original} alt="Original" className="w-full h-full object-contain blur-xl saturate-[0.8] brightness-75 transition-all duration-300" />}
+                    {original && <img src={original} alt="Original" className="w-full h-full object-contain blur-lg saturate-[0.8] brightness-75 transition-all duration-300" />}
                 </div>
             </div>
 

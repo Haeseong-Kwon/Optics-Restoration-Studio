@@ -1,7 +1,7 @@
 # Research Report: AI 기반 광학 수차 보정 및 초해상도(Super-resolution) 영상 복원 시스템
 
 <div align="center">
-  <img src="optics_restoration_demo_v3.webp" width="85%" />
+  <img src="optics_restoration_demo_v4.webp" width="85%" />
   <p align="center">
     <em>사용자 인터페이스(UI)를 통한 실시간 광학 수차 보정 및 이미지 복원 프로세스 시연 화면입니다. Split-viewer를 통해 복원 전/후의 정밀한 디테일 대조와 정량적 품질 지표(PSNR, SSIM) 리포팅을 지원합니다.</em>
   </p>

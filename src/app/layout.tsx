@@ -17,9 +17,11 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={`${inter.className} min-h-screen flex text-white bg-black`}>
-                <RestorationSidebar />
-                <main className="flex-1 overflow-hidden flex flex-col">
+            <body className={`${inter.className} min-h-screen flex text-white bg-black overflow-x-hidden`}>
+                <div className="flex-shrink-0">
+                    <RestorationSidebar />
+                </div>
+                <main className="flex-1 min-w-0 overflow-hidden flex flex-col">
                     {children}
                 </main>
             </body>
