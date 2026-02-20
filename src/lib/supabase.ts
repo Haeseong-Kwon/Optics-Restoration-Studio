@@ -3,7 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 // Mock Supabase for demo recording if env vars are missing
 const isDemoMode = !process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
 
-const DEMO_IMAGE_URL = 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?auto=format&fit=crop&q=80&w=1200';
+const SHARP_IMAGE_URL = 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?auto=format&fit=crop&q=80&w=1200';
+const BLURRED_IMAGE_URL = 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?auto=format&fit=crop&q=80&w=1200&blur=80';
 
 // Persistent state for the mock
 let mockJobState = {
@@ -17,7 +18,7 @@ const mockSupabase = {
             upload: async () => ({ data: { path: 'demo.png' }, error: null }),
             getPublicUrl: (path: string) => ({
                 data: {
-                    publicUrl: DEMO_IMAGE_URL
+                    publicUrl: path.includes('restored') ? SHARP_IMAGE_URL : BLURRED_IMAGE_URL
                 }
             }),
             download: async () => new Blob()
@@ -32,7 +33,7 @@ const mockSupabase = {
                         data: {
                             id: 'demo-job-id',
                             status: 'pending',
-                            blurred_image_path: DEMO_IMAGE_URL,
+                            blurred_image_path: 'blurred/demo.png',
                             algorithm: 'wiener_deconvolution_v1'
                         },
                         error: null
@@ -54,8 +55,8 @@ const mockSupabase = {
                         data: {
                             id: 'demo-job-id',
                             status: mockJobState.status,
-                            blurred_image_path: DEMO_IMAGE_URL,
-                            restored_image_path: DEMO_IMAGE_URL,
+                            blurred_image_path: 'blurred/demo.png',
+                            restored_image_path: 'restored/demo.png',
                             algorithm: 'wiener_deconvolution_v1'
                         },
                         error: null
