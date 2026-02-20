@@ -13,19 +13,28 @@ export default function Dashboard() {
 
     const handleUpload = async (file: File) => {
         setIsProcessing(true);
-        setUploadProgress(10);
+        setUploadProgress(0);
 
         try {
             // 1. Upload blurred image to Supabase Storage
             const fileName = `${Date.now()}_${file.name}`;
             const filePath = `blurred/${fileName}`;
 
+            // Smooth progress simulation for upload
+            const progressInterval = setInterval(() => {
+                setUploadProgress(prev => {
+                    if (prev >= 90) return prev;
+                    return prev + 2;
+                });
+            }, 100);
+
             const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('images')
                 .upload(filePath, file);
 
+            clearInterval(progressInterval);
             if (uploadError) throw uploadError;
-            setUploadProgress(50);
+            setUploadProgress(100);
 
             // 2. Create job in restoration_jobs table
             const { data: jobData, error: jobError } = await supabase
@@ -40,7 +49,6 @@ export default function Dashboard() {
 
             if (jobError) throw jobError;
             setCurrentJob(jobData);
-            setUploadProgress(100);
 
         } catch (error) {
             console.error('Error during upload:', error);

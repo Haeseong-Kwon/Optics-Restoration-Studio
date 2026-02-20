@@ -3,38 +3,59 @@ import { createClient } from '@supabase/supabase-js';
 // Mock Supabase for demo recording if env vars are missing
 const isDemoMode = !process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder');
 
+const DEMO_IMAGE_URL = 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?auto=format&fit=crop&q=80&w=1200';
+
+// Persistent state for the mock
+let mockJobState = {
+    status: 'pending' as 'pending' | 'processing' | 'completed',
+    startTime: 0,
+};
+
 const mockSupabase = {
     storage: {
         from: () => ({
             upload: async () => ({ data: { path: 'demo.png' }, error: null }),
-            getPublicUrl: (path: string) => ({ data: { publicUrl: path.startsWith('http') ? path : `https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=1000` } }),
+            getPublicUrl: (path: string) => ({
+                data: {
+                    publicUrl: DEMO_IMAGE_URL
+                }
+            }),
             download: async () => new Blob()
         })
     },
     from: () => ({
         insert: () => ({
             select: () => ({
-                single: async () => ({
-                    data: {
-                        id: 'demo-job-id',
-                        status: 'pending',
-                        blurred_image_path: 'https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=1000',
-                        algorithm: 'wiener_deconvolution_v1'
-                    },
-                    error: null
-                })
+                single: async () => {
+                    mockJobState = { status: 'pending', startTime: Date.now() };
+                    return {
+                        data: {
+                            id: 'demo-job-id',
+                            status: 'pending',
+                            blurred_image_path: DEMO_IMAGE_URL,
+                            algorithm: 'wiener_deconvolution_v1'
+                        },
+                        error: null
+                    };
+                }
             })
         }),
         select: () => ({
             eq: () => ({
                 single: async () => {
-                    // Simulate completion after a few seconds
+                    const elapsed = Date.now() - mockJobState.startTime;
+                    if (elapsed > 3000) {
+                        mockJobState.status = 'completed';
+                    } else if (elapsed > 1000) {
+                        mockJobState.status = 'processing';
+                    }
+
                     return {
                         data: {
                             id: 'demo-job-id',
-                            status: 'completed',
-                            blurred_image_path: 'https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=1000',
-                            restored_image_path: 'https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=1000',
+                            status: mockJobState.status,
+                            blurred_image_path: DEMO_IMAGE_URL,
+                            restored_image_path: DEMO_IMAGE_URL,
                             algorithm: 'wiener_deconvolution_v1'
                         },
                         error: null

@@ -43,9 +43,9 @@ export function ImageUploader({ onUpload }: { onUpload: (file: File) => void }) 
     return (
         <div
             className={cn(
-                "relative w-full h-full rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all overflow-hidden min-h-[400px]",
-                isDragging ? "border-primary bg-primary/5 scale-[0.99]" : "border-white/10 hover:border-white/20 bg-white/5",
-                preview ? "border-transparent" : ""
+                "relative w-full h-full rounded-3xl border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-500 overflow-hidden min-h-[400px]",
+                isDragging ? "border-primary bg-primary/5 scale-[0.98]" : "border-white/10 hover:border-white/20 bg-white/5",
+                preview ? "border-transparent" : "hover:bg-white/[0.07]"
             )}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -53,26 +53,33 @@ export function ImageUploader({ onUpload }: { onUpload: (file: File) => void }) 
             onDrop={handleDrop}
         >
             {preview ? (
-                <div className="absolute inset-0 w-full h-full">
-                    <img src={preview} alt="Preview" className="w-full h-full object-contain" />
+                <div className="absolute inset-0 w-full h-full animate-in fade-in zoom-in-95 duration-700">
+                    <img
+                        src={preview}
+                        alt="Preview"
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?auto=format&fit=crop&q=80&w=1200';
+                        }}
+                    />
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
                             setPreview(null);
                         }}
-                        className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/80 rounded-full text-white transition-colors"
+                        className="absolute top-6 right-6 p-2.5 bg-black/60 hover:bg-black/80 backdrop-blur-md rounded-xl text-white transition-all hover:scale-110 active:scale-90"
                     >
                         <X className="w-4 h-4" />
                     </button>
                 </div>
             ) : (
                 <>
-                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-2">
-                        <Upload className="w-8 h-8 text-white/40" />
+                    <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-2 transition-transform duration-500 hover:rotate-6">
+                        <Upload className="w-10 h-10 text-white/40" />
                     </div>
-                    <div className="text-center">
-                        <p className="text-sm font-medium">Drag & Drop image</p>
-                        <p className="text-xs text-white/40 mt-1">PNG, JPG, TIFF up to 10MB</p>
+                    <div className="text-center px-6">
+                        <p className="text-base font-bold tracking-tight mb-1">Upload Optical Data</p>
+                        <p className="text-xs text-white/40 leading-relaxed font-medium">Drag & Drop raw or blurred images<br />PNG, JPG, TIFF up to 10MB</p>
                     </div>
                     <input
                         type="file"
@@ -83,9 +90,9 @@ export function ImageUploader({ onUpload }: { onUpload: (file: File) => void }) 
                     />
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
+                        className="mt-4 px-6 py-2.5 bg-white text-black hover:bg-white/90 rounded-xl text-sm font-bold transition-all hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:-translate-y-0.5"
                     >
-                        Select File
+                        Select Image
                     </button>
                 </>
             )}
